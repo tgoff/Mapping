@@ -1,5 +1,5 @@
 requirejs.config({
-    'baseUrl': '../leaflet.wms/lib',
+    'baseUrl': '../lib/leaflet.wms/lib',
     'paths': {
         'leaflet.wms': '../dist/leaflet.wms' //.js'
     }
