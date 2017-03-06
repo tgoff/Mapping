@@ -8,22 +8,20 @@ requirejs.config({
 define(['leaflet', 'leaflet.wms'],
 function(L, wms) {
 
-//var overlayMap = createMap('overlay-map', false);
-//var tiledMap = createMap('tiled-map', true);
 var tiledMap = createMap('mapid', true);
 
 function createMap(div, tiled) {
     // Map configuration
     var map = L.map(div,  {
-        center: [0, 0],
-        zoom: 3,
+        center: [37.0552645,-80.7815427],
+        zoom: 10,
         // Values are x and y here instead of lat and long elsewhere.
         maxBounds: [
             [-120, -220],
             [120, 220]
         ]
     });
-    map.fitBounds([[36.533333, -83.683333], [39.466667, -75.25]]);
+    //map.fitBounds([[37, -80], [39, -77]]);
 
     var basemaps = {
         'Basemap': basemap().addTo(map)//,
@@ -32,13 +30,8 @@ function createMap(div, tiled) {
 
     var MySource = wms.Source.extend({
         'showFeatureInfo': function(latlng, info) {
-            console.log("info:");
-            console.log(info);
-            // Hook to handle displaying parsed AJAX response to the user
-            if (!this._map) {
-              return;
-            }
-            this._map.openPopup(info, latlng);
+          //dont display an info popup.  its pretty useless on these layers
+          return;
         }
     });
     // Add WMS source/layers
@@ -49,11 +42,19 @@ function createMap(div, tiled) {
             "attribution": "<a href='http://nationalatlas.gov'>NationalAtlas.gov</a>",
             "info_format": "text/html",
             "opacity" : 0.4,
-            "tiled": tiled
+            "tiled" : tiled,
+            "style" : "{ color : '#1E8449'}"
         }
+    //Wired
+    //  Low
+    //var kbps200 = new MySource( "https://www.broadbandmap.gov/geoserver/gwc/service/wms", props).getLayer("fcc:wl_down_2_f2014");
+    var kbps768 = new MySource( "https://www.broadbandmap.gov/geoserver/gwc/service/wms", props).getLayer("fcc:wl_down_3_f2014");
+    var mbps1_5 = new MySource( "https://www.broadbandmap.gov/geoserver/gwc/service/wms", props).getLayer("fcc:wl_down_4_f2014");
+    //  Medium
     var mbps3 = new MySource( "https://www.broadbandmap.gov/geoserver/gwc/service/wms", props).getLayer("fcc:wl_down_5_f2014");
     var mbps6 = new MySource( "https://www.broadbandmap.gov/geoserver/gwc/service/wms", props).getLayer("fcc:wl_down_6_f2014");
     var mbps10 = new MySource( "https://www.broadbandmap.gov/geoserver/gwc/service/wms", props).getLayer("fcc:wl_down_7_f2014");
+    //  High
     var mbps25 = new MySource( "https://www.broadbandmap.gov/geoserver/gwc/service/wms", props).getLayer("fcc:wl_down_8_f2014");
     var mbps50 = new MySource( "https://www.broadbandmap.gov/geoserver/gwc/service/wms", props).getLayer("fcc:wl_down_9_f2014");
     var mbps100 = new MySource( "https://www.broadbandmap.gov/geoserver/gwc/service/wms", props).getLayer("fcc:wl_down_10_f2014");
@@ -63,21 +64,33 @@ function createMap(div, tiled) {
       'format': "image/png",
       'layers': '5',
       'transparent': true
-    });
+    }).addTo(map);
 
-    var layers = {
-        '3-6 MBPS': mbps3,
-        '6-10 MBPS': mbps6,
-        '10-25 MBPS': mbps10,
-        '25-50 MBPS': mbps25,
-        '50-100 MBPS': mbps50,
-        '100 MBPS - 1 GBPS': mbps100,
-        '1 GBPS+': gbps1,
-        'places': placeLabels
+    var lowspeedLayers =  L.layerGroup([
+         //kbps200,
+         kbps768] );
+    var midspeedLayers = L.layerGroup([
+         mbps1_5,
+         mbps3,
+         mbps6]);
+    var highspeedLayers = L.layerGroup([
+         mbps10,
+         mbps25,
+         mbps50,
+         mbps100,
+         gbps1]);
+    var displayLayers = {
+        '200 KBPS - 1.5MBPS' : lowspeedLayers,
+        '1.5 MBPS - 10 MBPS' : midspeedLayers,
+        '10 MBPS +' : highspeedLayers
     };
 
+    //Add layers
+    midspeedLayers.addTo(map);
+    highspeedLayers.addTo(map);
+
     // Create layer control
-    L.control.layers(basemaps, layers).addTo(map);
+    L.control.layers(basemaps, displayLayers).addTo(map);
 
     //source.setOpacity(0.6);
 
