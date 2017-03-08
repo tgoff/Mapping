@@ -21,7 +21,11 @@ function createMap(div, tiled) {
             [120, 220]
         ]
     });
-    //map.fitBounds([[37, -80], [39, -77]]);
+    //Create custom pane to put labels on top of everything
+    map.createPane('labels');
+    map.getPane('labels').style.zIndex = 650;
+    map.getPane('labels').style.pointerEvents = 'none';
+
 
     var basemaps = {
         'Basemap': basemap().addTo(map)//,
@@ -43,11 +47,10 @@ function createMap(div, tiled) {
             "info_format": "text/html",
             "opacity" : 0.4,
             "tiled" : tiled,
-            "style" : "{ color : '#1E8449'}"
+            "attribution": '<a href="https://www.broadbandmap.gov/">FCC National Broadband Map</a>'
         }
     //Wired
     //  Low
-    //var kbps200 = new MySource( "https://www.broadbandmap.gov/geoserver/gwc/service/wms", props).getLayer("fcc:wl_down_2_f2014");
     var kbps768 = new MySource( "https://www.broadbandmap.gov/geoserver/gwc/service/wms", props).getLayer("fcc:wl_down_3_f2014");
     var mbps1_5 = new MySource( "https://www.broadbandmap.gov/geoserver/gwc/service/wms", props).getLayer("fcc:wl_down_4_f2014");
     //  Medium
@@ -60,17 +63,11 @@ function createMap(div, tiled) {
     var mbps100 = new MySource( "https://www.broadbandmap.gov/geoserver/gwc/service/wms", props).getLayer("fcc:wl_down_10_f2014");
     var gbps1 = new MySource( "https://www.broadbandmap.gov/geoserver/gwc/service/wms", props).getLayer("fcc:wl_down_11_f2014");
 
-    var placeLabels = wms.tileLayer("https://services.nationalmap.gov/arcgis/services/geonames/MapServer/WMSServer", {
-      'format': "image/png",
-      'layers': '5',
-      'transparent': true
-    }).addTo(map);
 
     var lowspeedLayers =  L.layerGroup([
-         //kbps200,
-         kbps768] );
+         kbps768,
+         mbps1_5] );
     var midspeedLayers = L.layerGroup([
-         mbps1_5,
          mbps3,
          mbps6]);
     var highspeedLayers = L.layerGroup([
@@ -79,57 +76,36 @@ function createMap(div, tiled) {
          mbps50,
          mbps100,
          gbps1]);
+    var placeLabels = wms.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", {
+      'format': "image/png",
+      'pane': 'labels'
+    });
     var displayLayers = {
-        '200 KBPS - 1.5MBPS' : lowspeedLayers,
-        '1.5 MBPS - 10 MBPS' : midspeedLayers,
-        '10 MBPS +' : highspeedLayers
+        '768 KBPS - 3MBPS' : lowspeedLayers,
+        '3 MBPS - 10 MBPS' : midspeedLayers,
+        '10 MBPS +' : highspeedLayers,
+        'labels' : placeLabels
     };
 
     //Add layers
     midspeedLayers.addTo(map);
     highspeedLayers.addTo(map);
+    placeLabels.addTo(map);
+    placeLabels.bringToFront();
 
     // Create layer control
     L.control.layers(basemaps, displayLayers).addTo(map);
 
-    //source.setOpacity(0.6);
-
     basemap().addTo(map)
-    //reference_layer().addTo(map)
 
     return map;
 }
 
 function basemap() {
-  return L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+  return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.png', {
       maxZoom: 18,
-      attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a>  contributors, ' +
-      '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-      'Imagery © <a href="http://mapbox.com">Mapbox</a>',
-      id: 'mapbox.streets'
+      attribution: 'Map data and Imagery &copy; <a href="http://www.arcgis.com">ArcGIS</a>'
     })
-}
-
-function reference_layer(){
-  //Right now this does not work because it is a different projection.  Need to integrate proj4leaflet
-  var template =
-    "https://map1b.vis.earthdata.nasa.gov/wmts-webmerc/wmts.cgi?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=Reference_Features&STYLE=&TILEMATRIXSET=EPSG4326_250m&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=image%2Fpng"
-  return L.tileLayer(template, {
-    name: 'Borders and Roads *',
-    product: 'Reference_Features',
-    resolution: '250m',
-    format: 'png',
-    maxNativeZoom: 7,
-    tileSize: 512,
-    projection: "EPSG:4326",
-    attribution:
-    "<a href='https://wiki.earthdata.nasa.gov/display/GIBS'>" +
-        "NASA EOSDIS GIBS</a>&nbsp;&nbsp;&nbsp;" +
-        "<a href='https://github.com/nasa-gibs/web-examples/blob/release/examples/leaflet/webmercator-epsg3857.js'>" +
-        "View Source" +
-        "</a>"
-});
-
 }
 
 // Export maps for console experimentation
