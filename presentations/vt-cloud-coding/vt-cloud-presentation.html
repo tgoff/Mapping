@@ -135,6 +135,7 @@ timothy.d.goff@nasa.gov
 </script></section><section  data-markdown><script type="text/template"><!-- .slide: data-background-image="https://cdn.pixabay.com/photo/2015/09/29/22/49/blueprint-964630_1280.jpg"  data-background-opacity=".2"  -->
 ## Infrastructure as Code
 - Source control your whole infrastucture
+    - Including networking
 - Repeatable and recoverable architecture
 - Everything except for data is Cattle 
 - Cloudformation - https://aws.amazon.com/cloudformation/
@@ -153,7 +154,6 @@ resource "aws_vpc" "app" {
 
   tags = {
     Name                   = "Application VPC"
-    gsfc-ngap-prot-managed = "true"
   }
 }
 
@@ -163,13 +163,10 @@ resource "aws_subnet" "private_app" {
   vpc_id                  = aws_vpc.app.id
   map_public_ip_on_launch = false
   availability_zone       = element(data.aws_availability_zones.available.names, count.index)
-
-  # see https://fishingcatblog.wordpress.com/2016/09/22/terraform-interpolation-cidrsubnet/ for more on `cidrsubnet`
-  cidr_block = cidrsubnet(var.vpc_cidr_range, 2, count.index)
+  cidr_block = 10.0.0.0/16
 
   tags = {
     Name                   = "Private application ${data.aws_availability_zones.available.names[count.index]} subnet"
-    gsfc-ngap-prot-managed = "true"
   }
 }
 ```
